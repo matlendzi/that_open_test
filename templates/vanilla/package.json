@@ -26,6 +26,7 @@
     "@thatopen/fragments": "~3.2.0",
     "@thatopen/ui": "~3.2.0",
     "@thatopen/ui-obc": "~3.2.0",
+    "3d-tiles-renderer": "^0.4.7",
     "three": "0.175.0",
     "web-ifc": "0.0.72"
   }
