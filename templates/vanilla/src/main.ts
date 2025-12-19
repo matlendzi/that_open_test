@@ -5,6 +5,8 @@ import * as BUI from "@thatopen/ui";
 import * as TEMPLATES from "./ui-templates";
 import { appIcons, CONTENT_GRID_ID } from "./globals";
 import { viewportSettingsTemplate } from "./ui-templates/buttons/viewport-settings";
+import { registerTilesetManager } from "./tilesets";
+import { TilesRenderer } from "3d-tiles-renderer";
 
 BUI.Manager.init();
 
@@ -60,6 +62,24 @@ const { aoPass, edgesPass } = world.renderer.postproduction;
 
 edgesPass.color = new THREE.Color(0x494b50);
 
+const tilesRenderer = new TilesRenderer("");
+tilesRenderer.lruCache.minSize = 100;
+tilesRenderer.lruCache.maxSize = 600;
+tilesRenderer.fetchOptions.mode = "cors";
+tilesRenderer.fetchOptions.credentials = "same-origin";
+tilesRenderer.fetchOptions.referrerPolicy = "no-referrer";
+tilesRenderer.setCamera(world.camera.three);
+tilesRenderer.setResolutionFromRenderer(world.renderer.three);
+tilesRenderer.group.renderOrder = -10;
+world.scene.three.add(tilesRenderer.group);
+
+registerTilesetManager({
+  addTileset: async (url: string) => {
+    tilesRenderer.setTileset(url);
+    tilesRenderer.group.updateMatrixWorld(true);
+  },
+});
+
 const aoParameters = {
   radius: 0.25,
   distanceExponent: 1,
@@ -101,6 +121,19 @@ world.camera.projection.onChanged.add(() => {
 
 world.camera.controls.addEventListener("rest", () => {
   fragments.core.update(true);
+});
+
+world.onBeforeUpdate.add(() => {
+  tilesRenderer.update();
+});
+
+world.camera.controls.addEventListener("update", () => {
+  tilesRenderer.update();
+});
+
+viewport.addEventListener("resize", () => {
+  tilesRenderer.setResolutionFromRenderer(world.renderer.three);
+  tilesRenderer.update();
 });
 
 const ifcLoader = components.get(OBC.IfcLoader);

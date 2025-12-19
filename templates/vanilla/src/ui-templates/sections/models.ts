@@ -2,6 +2,7 @@ import * as BUI from "@thatopen/ui";
 import * as CUI from "@thatopen/ui-obc";
 import * as OBC from "@thatopen/components";
 import { appIcons } from "../../globals";
+import { getTilesetManager } from "../../tilesets";
 
 export interface ModelsPanelState {
   components: OBC.Components;
@@ -66,6 +67,31 @@ export const modelsPanelTemplate: BUI.StatefullComponent<ModelsPanelState> = (
     input.click();
   };
 
+  const onAddTileset = async ({ target }: { target: BUI.Button }) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = false;
+    input.accept = ".json";
+
+    input.addEventListener("change", async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      target.loading = true;
+      const url = URL.createObjectURL(file);
+      try {
+        await getTilesetManager().addTileset(url);
+      } finally {
+        URL.revokeObjectURL(url);
+        target.loading = false;
+        BUI.ContextMenu.removeMenus();
+      }
+    });
+
+    input.addEventListener("cancel", () => (target.loading = false));
+
+    input.click();
+  };
+
   const onSearch = (e: Event) => {
     const input = e.target as BUI.TextInput;
     modelsList.queryString = input.value;
@@ -79,6 +105,7 @@ export const modelsPanelTemplate: BUI.StatefullComponent<ModelsPanelState> = (
           <bim-context-menu style="gap: 0.25rem;">
             <bim-button label="IFC" @click=${onAddIfcModel}></bim-button>
             <bim-button label="Fragments" @click=${onAddFragmentsModel}></bim-button>
+            <bim-button label="3D Tiles" @click=${onAddTileset}></bim-button>
           </bim-context-menu> 
         </bim-button>
       </div>
